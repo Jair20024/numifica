@@ -111,3 +111,22 @@ class Diagnostico(Base):
     completado_en: Mapped[datetime] = mapped_column(
         TZ, server_default=func.now()
     )
+
+
+class DiagnosticoPregunta(Base):
+    __tablename__ = "diagnostico_pregunta"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    estudiante_id: Mapped[int] = mapped_column(
+        ForeignKey("usuario.id")
+    )
+
+    tema_id: Mapped[int] = mapped_column(
+        ForeignKey("tema.id")
+    )
+
+    ejercicio_id: Mapped[int] = mapped_column(
+        ForeignKey("ejercicio.id")
+    )
+

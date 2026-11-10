@@ -9,7 +9,15 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.db import get_db
 from app.deps import requiere_rol
-from app.models import Diagnostico, Ejercicio, OpcionEjercicio, Tema, Usuario
+
+from app.models import (
+    Diagnostico,
+    DiagnosticoPregunta,
+    Ejercicio,
+    OpcionEjercicio,
+    Tema,
+    Usuario,
+)
 
 router = APIRouter(prefix="/api", tags=["diagnostico"])
 
@@ -50,41 +58,80 @@ def estado_diagnostico(
     }
 
 
+
 @router.get("/temas/{tema_id}/diagnostico/preguntas")
 def preguntas_diagnostico(
     tema_id: int,
     usuario: Usuario = Depends(requiere_rol("ESTUDIANTE")),
     db: Session = Depends(get_db),
 ):
-    if db.scalar(select(Diagnostico.id).where(
-        Diagnostico.estudiante_id == usuario.id,
-        Diagnostico.tema_id == tema_id,
-    )) is not None:
+    if db.scalar(
+        select(Diagnostico.id).where(
+            Diagnostico.estudiante_id == usuario.id,
+            Diagnostico.tema_id == tema_id,
+        )
+    ) is not None:
         raise HTTPException(409, "Ya completaste este diagnóstico")
 
     if db.get(Tema, tema_id) is None:
         raise HTTPException(404, "Tema no encontrado")
 
-    preguntas = []
-    for dificultad in (1, 2, 3):
-        ejercicios = db.scalars(
+    ids_guardados = db.scalars(
+        select(DiagnosticoPregunta.ejercicio_id).where(
+            DiagnosticoPregunta.estudiante_id == usuario.id,
+            DiagnosticoPregunta.tema_id == tema_id,
+        )
+    ).all()
+
+    if ids_guardados:
+        if len(ids_guardados) != 6:
+            raise HTTPException(409, "El diagnóstico tiene preguntas incompletas")
+
+        preguntas = db.scalars(
             select(Ejercicio)
             .options(selectinload(Ejercicio.opciones))
-            .where(
-                Ejercicio.tema_id == tema_id,
-                Ejercicio.activo.is_(True),
-                Ejercicio.dificultad == dificultad,
-            )
+            .where(Ejercicio.id.in_(ids_guardados))
         ).all()
+    else:
+        preguntas = []
 
-        if len(ejercicios) < 2:
-            raise HTTPException(
-                409, "El tema necesita al menos 2 ejercicios por dificultad"
+        for dificultad in (1, 2, 3):
+            ejercicios = db.scalars(
+                select(Ejercicio)
+                .options(selectinload(Ejercicio.opciones))
+                .where(
+                    Ejercicio.tema_id == tema_id,
+                    Ejercicio.activo.is_(True),
+                    Ejercicio.dificultad == dificultad,
+                )
+            ).all()
+
+            if len(ejercicios) < 2:
+                raise HTTPException(
+                    409, "El tema necesita al menos 2 ejercicios por dificultad"
+                )
+
+            preguntas.extend(random.sample(ejercicios, 2))
+
+        for ejercicio in preguntas:
+            db.add(
+                DiagnosticoPregunta(
+                    estudiante_id=usuario.id,
+                    tema_id=tema_id,
+                    ejercicio_id=ejercicio.id,
+                )
             )
 
-        preguntas.extend(random.sample(ejercicios, 2))
+        try:
+            db.commit()
+        except IntegrityError:
+            db.rollback()
+            raise HTTPException(
+                409, "Las preguntas ya fueron asignadas. Recarga la página"
+            )
 
-    random.shuffle(preguntas)
+    if len(preguntas) != 6:
+        raise HTTPException(409, "No se pudieron recuperar las 6 preguntas")
 
     return [
         {
@@ -120,6 +167,19 @@ def entregar_diagnostico(
     ids = [r.ejercicio_id for r in datos.respuestas]
     if len(ids) != 6 or len(set(ids)) != 6:
         raise HTTPException(400, "Debes responder 6 ejercicios distintos")
+
+    ids_asignados = db.scalars(
+        select(DiagnosticoPregunta.ejercicio_id).where(
+            DiagnosticoPregunta.estudiante_id == usuario.id,
+            DiagnosticoPregunta.tema_id == tema_id,
+        )
+    ).all()
+
+    if len(ids_asignados) != 6 or set(ids) != set(ids_asignados):
+        raise HTTPException(
+            400,
+            "Debes responder exactamente las 6 preguntas asignadas",
+        )
 
     ejercicios = db.scalars(
         select(Ejercicio).where(

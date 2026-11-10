@@ -70,5 +70,33 @@ CREATE TABLE intento (
     fecha_hora TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+
+CREATE TABLE IF NOT EXISTS diagnostico (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    estudiante_id BIGINT NOT NULL
+        REFERENCES usuario(id),
+    tema_id BIGINT NOT NULL
+        REFERENCES tema(id),
+    aciertos SMALLINT NOT NULL
+        CHECK (aciertos BETWEEN 0 AND 6),
+    nivel VARCHAR(15) NOT NULL
+        CHECK (nivel IN ('BASICO', 'INTERMEDIO', 'AVANZADO')),
+    completado_en TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT uq_diagnostico_estudiante_tema
+        UNIQUE (estudiante_id, tema_id)
+);
+
+
+CREATE TABLE IF NOT EXISTS diagnostico_pregunta (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    estudiante_id BIGINT NOT NULL REFERENCES usuario(id),
+    tema_id BIGINT NOT NULL REFERENCES tema(id),
+    ejercicio_id BIGINT NOT NULL REFERENCES ejercicio(id),
+    CONSTRAINT uq_diagnostico_pregunta
+        UNIQUE (estudiante_id, tema_id, ejercicio_id)
+);
+
+
 CREATE INDEX ix_intento_estudiante
     ON intento (estudiante_id, fecha_hora DESC);
+

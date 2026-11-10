@@ -19,7 +19,7 @@ app.include_router(auth.router)
 app.include_router(practica.router)
 app.include_router(ranking.router)
 app.include_router(temas.router)
-app.include_router(practica.router)
+app.include_router(diagnostico.router)
 
 
 @app.get("/api/salud")

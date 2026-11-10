@@ -5,6 +5,7 @@ import Login from "./pages/Login";
 import Inicio from "./pages/Inicio";
 import Ranking from "./pages/Ranking";
 import Practicar from "./pages/Practicar";
+import TestDiagnostico from "./pages/TestDiagnostico";
 
 function RutaProtegida() {
   const { data: usuario, isLoading } = useUsuario();
@@ -24,6 +25,7 @@ export default function App() {
             <Route path="/ranking" element={<Ranking />} />
           </Route>
           <Route path="/practicar/:temaId" element={<Practicar />} />
+          <Route path="/diagnostico/:temaId" element={<TestDiagnostico />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
