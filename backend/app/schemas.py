@@ -45,3 +45,9 @@ class RankingFila(BaseModel):
     rango: str
     xp: int
     es_yo: bool
+
+
+class TemaOut(BaseModel):
+    id: int
+    nombre: str
+    competencia: str

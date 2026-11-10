@@ -36,7 +36,7 @@ export default function Login() {
         onSubmit={enviar}
         className="w-full max-w-md rounded-3xl border border-borde bg-white p-8 shadow-sm"
       >
-        <h1 className="mb-6 text-center text-3xl font-extrabold">Matemática 6to B</h1>
+        <h1 className="mb-6 text-center text-3xl font-extrabold">Numifica</h1>
 
         <label className="block font-bold">
           Usuario

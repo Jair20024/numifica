@@ -7,6 +7,13 @@ export type Usuario = {
   rol: string;
 };
 
+export type Tema = {
+  id: number;
+  nombre: string;
+  competencia: string;
+};
+
+
 export type FilaRanking = {
   posicion: number;
   alias: string;

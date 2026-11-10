@@ -33,11 +33,31 @@ class SesionAuth(Base):
     ultima_actividad: Mapped[datetime] = mapped_column(TZ, server_default=func.now())
 
 
+
+class Competencia(Base):
+    __tablename__ = "competencia"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    nombre: Mapped[str]
+
+    temas: Mapped[list["Tema"]] = relationship(
+        back_populates="competencia"
+    )
+
+
 class Tema(Base):
     __tablename__ = "tema"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    competencia_id: Mapped[int] = mapped_column(
+        ForeignKey("competencia.id")
+    )
     nombre: Mapped[str]
+
+    competencia: Mapped["Competencia"] = relationship(
+        back_populates="temas"
+    )
+
 
 
 class Ejercicio(Base):

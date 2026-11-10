@@ -2,14 +2,24 @@ import { useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api";
-import type { Ejercicio, Progreso, Resultado } from "../api";
+import type { Ejercicio, Progreso, Resultado, Tema } from "../api";
 import { nuevoToken } from "../util";
 
-const TOTAL = 10;
-const NOMBRE_TEMA = "Fracciones"; // temporal: en esta versión el tema es fijo
+const TOTAL = 3;
 
 export default function Practicar() {
   const { temaId } = useParams();
+
+  const { data: temas = [] } = useQuery({
+    queryKey: ["temas"],
+    queryFn: () => api.get<Tema[]>("/temas"),
+  });
+
+  const temaActual = temas.find(
+    (tema) => tema.id === Number(temaId)
+  );
+
+
   const [ronda, setRonda] = useState(0);
 
   const primero = useQuery({
@@ -37,11 +47,24 @@ export default function Practicar() {
   }
 
   return (
-    <Sesion key={ronda} primero={primero.data} onRepetir={() => setRonda((r) => r + 1)} />
+    <Sesion
+      key={ronda}
+      primero={primero.data}
+      nombreTema={temaActual?.nombre ?? "Matemática"}
+      onRepetir={() => setRonda((r) => r + 1)}
+    />
   );
 }
 
-function Sesion({ primero, onRepetir }: { primero: Ejercicio; onRepetir: () => void }) {
+function Sesion({
+  primero,
+  nombreTema,
+  onRepetir,
+}: {
+  primero: Ejercicio;
+  nombreTema: string;
+  onRepetir: () => void;
+}) {
   const qc = useQueryClient();
   const navigate = useNavigate();
 
@@ -103,7 +126,7 @@ function Sesion({ primero, onRepetir }: { primero: Ejercicio; onRepetir: () => v
     <div className="min-h-screen">
       <header className="border-b border-borde bg-white">
         <div className="mx-auto grid max-w-3xl grid-cols-3 items-center px-6 py-3 font-bold">
-          <span>{NOMBRE_TEMA}</span>
+          <span>{nombreTema}</span>
           <span className="text-center">
             {terminada ? "¡Listo!" : `Ejercicio ${numero} de ${TOTAL}`}
           </span>
@@ -214,9 +237,8 @@ function Retroalimentacion({
       className="mx-auto max-w-lg rounded-3xl border border-borde bg-white p-8 text-center shadow-sm"
     >
       <div
-        className={`mx-auto flex size-16 items-center justify-center rounded-full text-white ${
-          ok ? "bg-acierto" : "bg-error"
-        }`}
+        className={`mx-auto flex size-16 items-center justify-center rounded-full text-white ${ok ? "bg-acierto" : "bg-error"
+          }`}
       >
         {ok ? (
           <svg
