@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routers import auth, practica, ranking, temas
+from app.routers import auth, practica, ranking, temas, diagnostico
 
 
 app = FastAPI(title="Numifica API")
@@ -19,6 +19,7 @@ app.include_router(auth.router)
 app.include_router(practica.router)
 app.include_router(ranking.router)
 app.include_router(temas.router)
+app.include_router(practica.router)
 
 
 @app.get("/api/salud")

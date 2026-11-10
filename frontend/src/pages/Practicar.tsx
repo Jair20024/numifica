@@ -5,7 +5,7 @@ import { api } from "../api";
 import type { Ejercicio, Progreso, Resultado, Tema } from "../api";
 import { nuevoToken } from "../util";
 
-const TOTAL = 3;
+const TOTAL = 15;
 
 export default function Practicar() {
   const { temaId } = useParams();

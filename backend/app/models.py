@@ -94,3 +94,20 @@ class Intento(Base):
     tiempo_seg: Mapped[int]
     xp_ganado: Mapped[int]
     fecha_hora: Mapped[datetime] = mapped_column(TZ, server_default=func.now())
+
+
+class Diagnostico(Base):
+    __tablename__ = "diagnostico"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    estudiante_id: Mapped[int] = mapped_column(
+        ForeignKey("usuario.id")
+    )
+    tema_id: Mapped[int] = mapped_column(
+        ForeignKey("tema.id")
+    )
+    aciertos: Mapped[int]
+    nivel: Mapped[str]
+    completado_en: Mapped[datetime] = mapped_column(
+        TZ, server_default=func.now()
+    )
