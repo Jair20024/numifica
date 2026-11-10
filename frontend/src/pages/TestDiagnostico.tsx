@@ -13,6 +13,11 @@ export default function TestDiagnostico() {
     Record<number, number>
   >({});
 
+  const [resultado, setResultado] = useState<{
+    aciertos: number;
+    nivel: string;
+  } | null>(null);
+
   const {
     data: preguntas = [],
     isLoading,
@@ -43,7 +48,81 @@ export default function TestDiagnostico() {
     );
   }
 
+  if (resultado) {
+    return (
+      <main className="mx-auto max-w-2xl space-y-6 p-6">
+        <div className="rounded-2xl border border-borde bg-white p-8 text-center shadow-sm">
+          <div className="mb-4 text-5xl">🎉</div>
+
+          <h1 className="mb-3 text-3xl font-extrabold">
+            ¡Diagnóstico completado!
+          </h1>
+
+          <p className="mb-6 text-slate-600">
+            Has terminado tu evaluación inicial.
+          </p>
+
+          <p className="text-lg font-bold">
+            Respuestas correctas
+          </p>
+
+          <p className="my-3 text-5xl font-extrabold text-primario">
+            {resultado.aciertos} / 6
+          </p>
+
+          <p className="mt-6 text-lg font-bold">
+            Tu nivel inicial es:
+          </p>
+
+          <p className="my-4 text-3xl font-extrabold text-primario">
+            {resultado.nivel}
+          </p>
+
+          <p className="mb-8 text-slate-600">
+            Este resultado nos ayudará a conocer tu punto de partida.
+            Por ahora, no cambia la dificultad de tus ejercicios.
+          </p>
+
+          <Link
+            to={`/practicar/${temaId}`}
+            className="inline-block rounded-xl bg-primario px-8 py-3 font-bold text-white"
+          >
+            Comenzar a practicar
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
   const respondidas = Object.keys(respuestas).length;
+
+  async function entregarDiagnostico() {
+    try {
+      const resultado = await api.post<{
+        completado: boolean;
+        aciertos: number;
+        nivel: string;
+      }>(`/temas/${temaId}/diagnostico/entregar`, {
+        respuestas: Object.entries(respuestas).map(
+          ([ejercicioId, opcionId]) => ({
+            ejercicio_id: Number(ejercicioId),
+            opcion_id: opcionId,
+          })
+        ),
+      });
+
+      setResultado({
+        aciertos: resultado.aciertos,
+        nivel: resultado.nivel,
+      });
+    } catch (error) {
+      alert(
+        error instanceof Error
+          ? error.message
+          : "No se pudo entregar el diagnóstico"
+      );
+    }
+  }
 
   return (
     <main className="mx-auto max-w-2xl space-y-6 p-6">
@@ -98,10 +177,11 @@ export default function TestDiagnostico() {
 
       <button
         type="button"
-        disabled
-        className="w-full rounded-xl bg-slate-400 px-6 py-3 font-bold text-white"
+        onClick={entregarDiagnostico}
+        disabled={respondidas !== 6}
+        className="w-full rounded-xl bg-primario px-6 py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
       >
-        Entregar diagnóstico (próximamente)
+        Entregar diagnóstico
       </button>
     </main>
   );

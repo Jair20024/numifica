@@ -4,6 +4,55 @@ import { api } from "../api";
 import type { Progreso, Tema } from "../api";
 import { useUsuario } from "../auth";
 
+function BotonTema({ temaId }: { temaId: number }) {
+  const { data: estado, isLoading, error } = useQuery({
+    queryKey: ["diagnostico-estado", temaId],
+    queryFn: () =>
+      api.get<{ completado: boolean }>(
+        `/temas/${temaId}/diagnostico/estado`
+      ),
+  });
+
+  if (isLoading) {
+    return (
+      <p className="mt-5 text-slate-500">
+        Comprobando diagnóstico...
+      </p>
+    );
+  }
+
+  if (error || !estado) {
+    return (
+      <p className="mt-5 text-red-600">
+        No se pudo comprobar el diagnóstico.
+      </p>
+    );
+  }
+
+  return (
+    <div className="mt-5 space-y-2">
+      <p className="text-sm text-slate-600">
+        {estado.completado
+          ? "Diagnóstico completado ✓"
+          : "Diagnóstico pendiente"}
+      </p>
+
+      <Link
+        to={
+          estado.completado
+            ? `/practicar/${temaId}`
+            : `/diagnostico/${temaId}`
+        }
+        className="inline-block rounded-xl bg-primario px-6 py-3 font-extrabold text-white hover:bg-primario-oscuro"
+      >
+        {estado.completado
+          ? "Practicar"
+          : "Realizar diagnóstico"}
+      </Link>
+    </div>
+  );
+}
+
 
 export default function Inicio() {
   const { data: usuario } = useUsuario();
@@ -15,7 +64,7 @@ export default function Inicio() {
     enabled: esEstudiante,
   });
 
-    const {
+  const {
     data: temas = [],
     isLoading: cargandoTemas,
     error: errorTemas,
@@ -54,45 +103,38 @@ export default function Inicio() {
       )}
 
 
-<section className="space-y-4">
-  <h2 className="text-2xl font-extrabold">
-    Temas de Matemática
-  </h2>
+      <section className="space-y-4">
+        <h2 className="text-2xl font-extrabold">
+          Temas de Matemática
+        </h2>
 
-  {cargandoTemas && <p>Cargando temas...</p>}
+        {cargandoTemas && <p>Cargando temas...</p>}
 
-  {errorTemas && (
-    <p role="alert" className="text-error">
-      No se pudieron cargar los temas.
-    </p>
-  )}
+        {errorTemas && (
+          <p role="alert" className="text-error">
+            No se pudieron cargar los temas.
+          </p>
+        )}
 
-  <div className="grid gap-4 md:grid-cols-2">
-    {temas.map((tema) => (
-      <article
-        key={tema.id}
-        className="rounded-2xl border border-borde bg-white p-6"
-      >
-        <h3 className="text-xl font-extrabold">
-          {tema.nombre}
-        </h3>
+        <div className="grid gap-4 md:grid-cols-2">
+          {temas.map((tema) => (
+            <article
+              key={tema.id}
+              className="rounded-2xl border border-borde bg-white p-6"
+            >
+              <h3 className="text-xl font-extrabold">
+                {tema.nombre}
+              </h3>
 
-        <p className="mt-2 text-sm text-slate-600">
-          Competencia: {tema.competencia}
-        </p>
+              <p className="mt-2 text-sm text-slate-600">
+                Competencia: {tema.competencia}
+              </p>
 
-        <Link
-          to={`/practicar/${tema.id}`}
-          className="mt-5 inline-block rounded-xl bg-primario
-                     px-6 py-3 font-extrabold text-white
-                     hover:bg-primario-oscuro"
-        >
-          Practicar
-        </Link>
-      </article>
-    ))}
-  </div>
-</section>
+              <BotonTema temaId={tema.id} />
+            </article>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
